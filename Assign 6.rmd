@@ -1,0 +1,131 @@
+---
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+```{r}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(dendextend)
+```
+
+```{r}
+library(readr)
+trucks <- read_csv("E:/Download/BAN 502/M6/trucks.csv")
+str(trucks)
+summary(trucks)
+```
+
+#Task 1
+
+```{r}
+ggplot(trucks, aes(x=Distance, y=Speeding))+geom_point()
+```
+
+##There are three to four clusters on the plot. The first one is around 50 miles distance with a speeding around 10 miles per hour. The second one is same as the first one around 50 miles distance but with a speeding around 30. The third one is around 175 miles distance with a speeding under 25 miles per hour. The fourth cluster is around 175 miles distance but with high speeding. 
+
+
+#Task 2
+
+```{r}
+trucks2 = select(trucks, c("Distance","Speeding"))
+trucks3 = as.data.frame(scale(trucks2))
+summary(trucks3)
+```
+
+#Task 3
+```{r}
+set.seed(1234)
+cluster = kmeans(trucks3,2)
+fviz_cluster(cluster, trucks3)
+```
+
+##The first cluster looks ok to me but the second cluster is very large and I think it can be divided by more clusters. 
+
+
+#Task 4
+```{r}
+set.seed(123)
+fviz_nbclust(trucks3, kmeans, method = "wss")
+```
+
+```{r}
+set.seed(123)
+fviz_nbclust(trucks3, kmeans, method = "silhouette")
+```
+
+##It seems that 4 is the optimal cluster number.
+
+
+#Task 5
+```{r}
+set.seed(1234)
+cluster1 = kmeans(trucks3,4)
+fviz_cluster(cluster1, trucks3)
+```
+
+
+#Task 6
+
+##Cluster one is drivers drove short distance with low speed. Cluster two is drivers drove short distance with high speed. Cluster three is drivers drove long distance with low speed. Cluster four is drivers drove long distance with hig speed.
+
+
+
+#Task 7
+
+```{r}
+wineprice <- read_csv("wineprice.csv")
+str(wineprice)
+summary(wineprice)
+```
+
+```{r}
+wine = as.data.frame(scale(wineprice))
+wine1 = select(wine, -"Year", - "FrancePop")
+```
+
+```{r}
+set.seed(123)
+fviz_nbclust(wine1, kmeans, method = "wss")
+```
+
+```{r}
+set.seed(123)
+fviz_nbclust(wine1, kmeans, method = "silhouette")
+```
+
+
+#Task 8
+
+```{r}
+set.seed(123)
+cluster2 = kmeans(wine1,5)
+fviz_cluster(cluster2, wine1)
+```
+
+
+#Task 9
+```{r}
+m = c("average","single","complete","ward")
+names(m) = c("average","single","complete","ward")
+
+ac = function(x) { 
+  agnes(wine1, method = x)$ac
+  }
+map_dbl(m, ac)
+```
+
+```{r}
+hc = agnes(wine1, method = "ward")
+pltree(hc, cex = 0.6, hang = -1, main = "Agglomerative Dendrogram")
+```
+
+#Task 10
+
+```{r}
+hc2 = diana(wine1)
+pltree(hc2, cex = 0.6, hang = -1, main = "Divisive Dendogram")
+```
+
