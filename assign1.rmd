@@ -1,0 +1,120 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+```{r}
+library(tidyverse)
+library(caret)
+library(nnet)
+```
+
+```{r}
+library(readr)
+parole <- read_csv("parole.csv")
+View(parole)
+```
+
+```{r}
+parole = parole %>% 
+  mutate(male=as.factor(as.character(male)))%>%
+  mutate(male=fct_recode(male,"male"="1","female"="0"))%>%   mutate(race=as.factor(race))%>%
+  mutate(race=fct_recode(race,"white"="1","otherwise"="2"))%>%
+  mutate(state = as.factor(state)) %>%        
+  mutate(state=fct_recode(state,"Other"="1","Kentuky"="2","Louisiana"="3","Virginia"="4"))%>% 
+  mutate(multiple.offenses=as.factor(multiple.offenses))%>% 
+  mutate(multiple.offenses=fct_recode(multiple.offenses,"Yes"="1","No"="0"))%>%
+  mutate(crime=as.factor(crime))  %>%
+  mutate(crime=fct_recode(crime,"other"="1","larceny"="2","drug-related"="3","driving-related"="4")) %>%
+
+  mutate(violator=as.factor(violator))%>%
+  mutate(violator=fct_recode(violator,"violated"="1","not violated"="0"))
+
+```
+
+
+#Task 1
+
+```{r}
+set.seed(12345)
+train.row = createDataPartition(y=parole$violator, p=0.7, list = FALSE)
+train = parole[train.row,]
+test = parole[-train.row,]
+```
+
+
+#Task 2
+
+```{r}
+fitcontrol = trainControl(method = "cv", number = 10)
+nnetGrid = expand.grid(size = 12, decay = 0.1)
+set.seed(1234)
+nnetBasic = train(violator ~ .,parole, method = "nnet", tuneGrid = nnetGrid, trControl = fitcontrol, verbose = FALSE, trace = FALSE)
+```
+```{r}
+nnetBasic
+```
+
+
+#Task 3
+
+```{r}
+predNetBasic = predict(nnetBasic, train)
+```
+```{r}
+confusionMatrix(predNetBasic, train$violator, positive = "violated")
+```
+
+###The accuracy of Neural Network is 87% and when we put it in the training set, it increases to 93%. The change is within our prediction. It is a good model.
+
+
+#Task 4
+
+```{r}
+fitcontrol1 = trainControl(method = "cv", number = 10)
+nnetGrid1 = expand.grid(size = seq(from = 1, to = 12, by = 1), decay = seq(from = 0.1, to = 0.5, by = 0.1))
+
+set.seed(1234)
+nnetFit = train(violator ~ ., parole, method = "nnet", trControl = fitcontrol1, tuneGrid = nnetGrid1, verbose = FALSE, trace = FALSE)
+```
+```{r}
+nnetFit
+```
+
+#Task 5
+
+```{r}
+predNetFit = predict(nnetFit, train)
+```
+
+```{r}
+confusionMatrix(predNetFit, train$violator, positive = "violated")
+```
+
+
+###The accuracys of the two models are still closed. The neural network is a good model.
+
+
+#Task 6
+
+```{r}
+predNetBasic1 = predict(nnetBasic, test)
+```
+
+```{r}
+confusionMatrix(predNetBasic1,test$violator,positive = "violated")
+```
+
+
+#Task 7
+
+```{r}
+predNetFit1 = predict(nnetFit, test)
+```
+```{r}
+confusionMatrix(predNetFit1, test$violator, positive = "violated")
+```
+
+#Task8
+
+###I don't find overfitting in these models.
